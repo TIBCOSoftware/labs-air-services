@@ -1,0 +1,18 @@
+# builder image
+FROM public.ecr.aws/tibcolabs/labs-air-flogo-builder:1.14-alpine AS flogobuilder
+
+WORKDIR /home
+COPY apps /home
+
+ARG APP_NAME=notfound
+
+# Create flogo project
+RUN chmod a+x create_build.sh;\
+    ./create_build.sh ${APP_NAME};
+
+# generate clean, final image for end users
+FROM alpine:3.14
+COPY --from=flogobuilder /home/app/bin/app .
+
+# executable
+ENTRYPOINT [ "./app" ]

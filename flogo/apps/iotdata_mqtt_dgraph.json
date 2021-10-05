@@ -1,0 +1,87 @@
+{
+  "name": "iotdata_mqtt_dgraph",
+  "type": "flogo:app",
+  "version": "0.0.1",
+  "appModel": "1.1.0",
+  "description": "",
+  "imports": [
+    "github.com/project-flogo/contrib/activity/actreturn",
+    "github.com/project-flogo/contrib/activity/log",
+    "github.com/project-flogo/edge-contrib/trigger/mqtt",
+    "github.com/project-flogo/flow"
+  ],
+  "triggers": [
+    {
+      "id": "mqtt_subscriber",
+      "ref": "#mqtt",
+      "name": "MQTTSubscriber",
+      "description": "MQTT Trigger to subscribe to edge data",
+      "settings": {
+        "broker": "=$env[Mqtt.IoTMQTT.Broker_URL]",
+        "id": "edge_mqtt_trigger",
+        "username": "=$env[Mqtt.IoTMQTT.Username]",
+        "password": "=$env[Mqtt.IoTMQTT.Password]"
+      },
+      "handlers": [
+        {
+          "settings": {
+            "topic": "=$env[MQTTTrigger.Topic]",
+            "qos": "=$env[MQTTTrigger.MaximumQOS]"
+          },
+          "action": {
+            "ref": "#flow",
+            "settings": {
+              "flowURI": "res://flow:process_sensor_readings_gateway"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "id": "flow:process_sensor_readings_gateway",
+      "data": {
+        "name": "ProcessSensorReadingsGateway",
+        "metadata": {
+          "input": [
+            {
+              "name": "body",
+              "type": "object"
+            }
+          ]
+        },
+        "tasks": [
+          {
+            "id": "log_2",
+            "name": "Log_Body",
+            "description": "Logs a message",
+            "activity": {
+              "ref": "#log",
+              "input": {
+                "message": "=$flow.body",
+                "addDetails": false,
+                "usePrint": false
+              }
+            }
+          },
+          {
+            "id": "actreturn_3",
+            "name": "Return",
+            "description": "Return Activity",
+            "activity": {
+              "ref": "#actreturn",
+              "settings": {}
+            }
+          }
+        ],
+        "links": [
+          {
+            "from": "log_2",
+            "to": "actreturn_3"
+          }
+        ]
+      }
+    }
+  ]
+}

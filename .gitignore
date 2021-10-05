@@ -1,11 +1,4 @@
 .target
 .DS_Store
-aws/keys/*
-
-**/air.egg-info/**
-**/__pycache__/**
-
-**secToken.txt**
-**secTokenString.txt**
 
 

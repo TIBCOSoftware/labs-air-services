@@ -3,16 +3,17 @@
         "github.com/project-flogo/flow",
         "github.com/SteveNY-Tibco/labs-air-contrib/activity/log",
         "github.com/project-flogo/flow/activity/subflow",
-        "github.com/SteveNY-Tibco/labs-air-contrib/activity/accumulator",
+        "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/SteveNY-Tibco/labs-air-contrib/activity/graphbuilder/builder",
         "github.com/SteveNY-Tibco/labs-air-contrib/activity/graphbuilder/dgraphupsert",
-        "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/SteveNY-Tibco/labs-air-contrib/trigger/mqtt",
+        "github.com/project-flogo/contrib/function/array",
         "github.com/project-flogo/contrib/function/utils",
         "github.com/project-flogo/contrib/function/string",
-        "github.com/project-flogo/contrib/function/coerce"
+		"github.com/project-flogo/contrib/function/coerce",
+        "github.com/SteveNY-Tibco/labs-air-contrib/function/f1"
     ],
-    "name": "IoTData_MQTT_Dgraph",
+    "name": "IoTMetadata_MQTT_Dgraph",
     "description": "",
     "version": "1.0.0",
     "type": "flogo:app",
@@ -45,11 +46,17 @@
                     "action": {
                         "ref": "github.com/project-flogo/flow",
                         "settings": {
-                            "flowURI": "res://flow:ProcessSensorReadingsGateway"
+                            "flowURI": "res://flow:SetupMetadata"
                         },
                         "input": {
-                            "topic": "=$.topic",
-                            "data": "=$.content"
+                            "gateway": "=$.jsonValue.gateway",
+                            "devices": {
+                                "mapping": {
+                                    "@foreach($.jsonValue.devices,devices)": {
+                                        "=": "$loop"
+                                    }
+                                }
+                            }
                         }
                     },
                     "name": "DataSource"
@@ -59,15 +66,21 @@
     ],
     "resources": [
         {
-            "id": "flow:ProcessSensorReadingsGateway",
+            "id": "flow:SetupMetadata",
             "data": {
-                "name": "ProcessSensorReadingsGateway",
+                "name": "SetupMetadata",
                 "description": "",
                 "links": [
                     {
                         "id": 1,
                         "from": "LogMessage",
-                        "to": "ProcessReading",
+                        "to": "SetupGateway",
+                        "type": "default"
+                    },
+                    {
+                        "id": 2,
+                        "from": "SetupGateway",
+                        "to": "Return",
                         "type": "default"
                     }
                 ],
@@ -81,42 +94,37 @@
                             "input": {
                                 "Log Level": "=$property[\"Logging.LogLevel\"]",
                                 "flowInfo": false,
-                                "message": "=coerce.toString($flow.body)"
+                                "message": "=\"Received Metadata Upsert request: \" + f1.object2json($flow.gateway)"
                             }
                         }
                     },
                     {
-                        "id": "ProcessReading",
-                        "name": "ProcessReading",
+                        "id": "SetupGateway",
+                        "name": "SetupGateway",
                         "description": "Simple SubFlow Activity",
-                        "type": "iterator",
-                        "settings": {
-                            "iterate": "=$flow.body.readings",
-                            "accumulate": false
-                        },
                         "activity": {
                             "ref": "#subflow",
                             "settings": {
-                                "flowURI": "res://flow:AggregateAndSave"
+                                "flowURI": "res://flow:SetupGatewayMetadata"
                             },
                             "input": {
-                                "id": "=$flow.body.id",
-                                "pushed": "=$flow.body.pushed",
-                                "device": "=$flow.body.device",
-                                "created": "=$flow.body.created",
-                                "modified": "=$flow.body.modified",
-                                "origin": "=$flow.body.origin",
-                                "gateway": "=$flow.body.gateway",
-                                "reading": {
+                                "gateway": {
                                     "mapping": {
-                                        "id": "=$iteration[value].id",
-                                        "pushed": "=$iteration[value].pushed",
-                                        "created": "=$iteration[value].created",
-                                        "origin": "=$iteration[value].origin",
-                                        "modified": "=$iteration[value].modified",
-                                        "device": "=$iteration[value].device",
-                                        "name": "=$iteration[value].name",
-                                        "value": "=$iteration[value].value"
+                                        "uid": "=$flow.gateway.uid",
+                                        "uuid": "=$flow.gateway.uuid",
+                                        "description": "=$flow.gateway.description",
+                                        "address": "=$flow.gateway.address",
+                                        "router": "=$flow.gateway.router",
+                                        "routerPort": "=$flow.gateway.routerPort",
+                                        "deployNetwork": "=$flow.gateway.deployNetwork",
+                                        "latitude": "=$flow.gateway.latitude",
+                                        "longitude": "=$flow.gateway.longitude",
+                                        "accessToken": "=$flow.gateway.accessToken",
+                                        "username": "=$flow.gateway.username",
+                                        "platform": "=$flow.gateway.platform",
+                                        "createdts": "=$flow.gateway.createdts",
+                                        "updatedts": "=$flow.gateway.updatedts",
+                                        "devicesMetadata": "=f1.object2json($flow.devices)"
                                     }
                                 }
                             },
@@ -124,145 +132,66 @@
                                 "input": {
                                     "input": {
                                         "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}",
-                                        "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
+                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"gateway\":{\"type\":\"object\",\"properties\":{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"devicesMetadata\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}}}}",
+                                        "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"gateway\":{\"type\":\"object\",\"properties\":{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"devicesMetadata\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}}}}"
                                     }
                                 }
                             }
+                        }
+                    },
+                    {
+                        "id": "Return",
+                        "name": "Return",
+                        "description": "",
+                        "activity": {
+                            "ref": "#actreturn"
                         }
                     }
                 ],
                 "metadata": {
                     "input": [
                         {
-                            "name": "topic",
-                            "type": "string"
-                        },
-                        {
-                            "name": "retained",
-                            "type": "boolean"
-                        },
-                        {
-                            "name": "qos",
-                            "type": "integer"
-                        },
-                        {
-                            "name": "body",
+                            "name": "gateway",
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
+                                "value": "{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}"
+                            }
+                        },
+                        {
+                            "name": "devices",
+                            "type": "array",
+                            "schema": {
+                                "type": "json",
+                                "value": "{\"type\":\"object\",\"properties\":{\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"description\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"adminState\":{\"type\":\"string\"},\"operatingState\":{\"type\":\"string\"},\"profile\":{\"type\":\"object\",\"properties\":{\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"description\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"manufacturer\":{\"type\":\"string\"},\"model\":{\"type\":\"string\"},\"deviceResources\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"properties\":{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"readWrite\":{\"type\":\"string\"},\"minimum\":{\"type\":\"string\"},\"defaultValue\":{\"type\":\"string\"}}},\"units\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"readWrite\":{\"type\":\"string\"},\"defaultValue\":{\"type\":\"string\"}}}}},\"attributes\":{\"type\":\"object\",\"properties\":{\"Interface\":{\"type\":\"string\"},\"Pin_Num\":{\"type\":\"string\"},\"Type\":{\"type\":\"string\"},\"Visualization\":{\"type\":\"string\"}}}}}}}}}}"
                             }
                         }
                     ],
                     "output": [],
                     "fe_metadata": {
-                        "input": "{\"type\":\"object\",\"title\":\"MQTTSubscriber\",\"properties\":{\"topic\":{\"type\":\"string\",\"required\":false},\"retained\":{\"type\":\"boolean\",\"required\":false},\"qos\":{\"type\":\"integer\",\"required\":false},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}}}}"
+                        "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"gateway\":{\"type\":\"object\",\"properties\":{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}},\"devices\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"description\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"adminState\":{\"type\":\"string\"},\"operatingState\":{\"type\":\"string\"},\"profile\":{\"type\":\"object\",\"properties\":{\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"description\":{\"type\":\"string\"},\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"manufacturer\":{\"type\":\"string\"},\"model\":{\"type\":\"string\"},\"deviceResources\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"description\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"properties\":{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"readWrite\":{\"type\":\"string\"},\"minimum\":{\"type\":\"string\"},\"defaultValue\":{\"type\":\"string\"}}},\"units\":{\"type\":\"object\",\"properties\":{\"type\":{\"type\":\"string\"},\"readWrite\":{\"type\":\"string\"},\"defaultValue\":{\"type\":\"string\"}}}}},\"attributes\":{\"type\":\"object\",\"properties\":{\"Interface\":{\"type\":\"string\"},\"Pin_Num\":{\"type\":\"string\"},\"Type\":{\"type\":\"string\"},\"Visualization\":{\"type\":\"string\"}}}}}}}}}}}}}"
                     }
                 }
             }
         },
         {
-            "id": "flow:AggregateAndSave",
+            "id": "flow:SetupGatewayMetadata",
             "data": {
-                "name": "AggregateAndSave",
+                "name": "SetupGatewayMetadata",
                 "description": "",
                 "links": [
                     {
                         "id": 1,
-                        "from": "LogSingleReading",
-                        "to": "AccumulatorSimple",
-                        "type": "default"
-                    },
-                    {
-                        "id": 2,
-                        "from": "AccumulatorSimple",
-                        "to": "BuildGraph",
-                        "type": "default"
-                    },
-                    {
-                        "id": 3,
                         "from": "BuildGraph",
-                        "to": "DgraphUpsertSimple",
-                        "type": "default"
-                    },
-                    {
-                        "id": 4,
-                        "from": "DgraphUpsertSimple",
-                        "to": "ReturnSimple",
+                        "to": "DgraphUpsert",
                         "type": "default"
                     }
                 ],
                 "tasks": [
                     {
-                        "id": "LogSingleReading",
-                        "name": "LogSingleReading",
-                        "description": "Simple Log Message Activity",
-                        "activity": {
-                            "ref": "#log",
-                            "input": {
-                                "Log Level": "INFO",
-                                "flowInfo": false,
-                                "message": "=\"Processing single reading for: \" + $flow.reading.device + \"---\" + $flow.reading.name"
-                            }
-                        }
-                    },
-                    {
-                        "id": "AccumulatorSimple",
-                        "name": "AccumulatorSimple",
-                        "description": "Accumulate tuple then release them as a batch",
-                        "activity": {
-                            "ref": "#accumulator",
-                            "settings": {
-                                "ArrayMode": false,
-                                "WindowSize": 1,
-                                "DataFields": "[{\"Name\":\"id\",\"Type\":\"String\"},{\"Name\":\"device\",\"Type\":\"String\"},{\"Name\":\"origin\",\"Type\":\"Long\"},{\"Name\":\"name\",\"Type\":\"String\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
-                            },
-                            "input": {
-                                "Input": {
-                                    "mapping": {
-                                        "id": "=$flow.reading.id",
-                                        "device": "=$flow.reading.device",
-                                        "origin": "=$flow.reading.origin",
-                                        "name": "=$flow.reading.name",
-                                        "value": "=string.endsWith($flow.reading.name, \"Inferred\") ? utils.encodeBase64(coerce.toBytes($flow.reading.value)):$flow.reading.value"
-                                    }
-                                }
-                            },
-                            "schemas": {
-                                "input": {
-                                    "Input": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"device\":{\"type\":\"string\"},\"origin\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}",
-                                        "fe_metadata": "{\"id\":\"2\",\"device\":\"2\",\"origin\":2,\"name\":\"2\",\"value\":\"2\"}"
-                                    }
-                                },
-                                "output": {
-                                    "Output": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"device\":{\"type\":\"string\"},\"origin\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"},\"LastElement\":{\"type\":\"boolean\"}}}}",
-                                        "fe_metadata": "[{\"id\":\"2\",\"device\":\"2\",\"origin\":2,\"name\":\"2\",\"value\":\"2\",\"LastElement\":true}]"
-                                    }
-                                },
-                                "settings": {
-                                    "DataFields": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"Name\":{\"type\":\"string\"},\"Type\":{\"type\":\"string\"}},\"required\":[\"Name\",\"Type\"]}}",
-                                        "fe_metadata": "[{\"Name\":\"id\",\"Type\":\"String\"},{\"Name\":\"device\",\"Type\":\"String\"},{\"Name\":\"origin\",\"Type\":\"Long\"},{\"Name\":\"name\",\"Type\":\"String\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    {
                         "id": "BuildGraph",
                         "name": "BuildGraph",
                         "description": "This activity build graph from incoming data",
-                        "type": "iterator",
-                        "settings": {
-                            "iterate": "=$activity[AccumulatorSimple].Output",
-                            "accumulate": false
-                        },
                         "activity": {
                             "ref": "#builder",
                             "settings": {
@@ -407,29 +336,23 @@
                             "input": {
                                 "Nodes": {
                                     "mapping": {
-                                        "reading": {
-                                            "uuid": "=$iteration[value].id",
-                                            "reading": "reading",
-                                            "value": "=$iteration[value].value",
-                                            "created": "=$iteration[value].origin",
-                                            "type": "reading"
-                                        },
-                                        "resource": {
-                                            "uuid": "=string.concat($iteration[value].device, \"_\", $iteration[value].name)",
-                                            "resource": "resource",
-                                            "name": "=$iteration[value].name",
-                                            "type": "resource"
-                                        },
-                                        "device": {
-                                            "uuid": "=$iteration[value].device",
-                                            "device": "device",
-                                            "name": "=$iteration[value].device",
-                                            "type": "device"
-                                        },
                                         "gateway": {
                                             "dgraph.type": "Gateway",
-                                            "gateway": "gateway",
-                                            "uuid": "=$flow.gateway",
+                                            "gateway": "",
+                                            "accessToken": "=$flow.gateway.accessToken",
+                                            "username": "=$flow.gateway.username",
+                                            "platform": "=$flow.gateway.platform",
+                                            "address": "=$flow.gateway.address",
+                                            "router": "=$flow.gateway.router",
+                                            "routerPort": "=$flow.gateway.routerPort",
+                                            "deployNetwork": "=$flow.gateway.deployNetwork",
+                                            "uuid": "=$flow.gateway.uuid",
+                                            "description": "=$flow.gateway.description",
+                                            "devicesMetadata": "=utils.encodeBase64(coerce.toBytes($flow.gateway.devicesMetadata))",
+                                            "latitude": "=$flow.gateway.latitude",
+                                            "longitude": "=$flow.gateway.longitude",
+                                            "createdts": "=$flow.gateway.createdts",
+                                            "updatedts": "=$flow.gateway.updatedts",
                                             "type": "gateway"
                                         }
                                     }
@@ -464,8 +387,8 @@
                         }
                     },
                     {
-                        "id": "DgraphUpsertSimple",
-                        "name": "DgraphUpsertSimple",
+                        "id": "DgraphUpsert",
+                        "name": "DgraphUpsert",
                         "description": "This activity upsert to Dgraph",
                         "activity": {
                             "ref": "#dgraphupsert",
@@ -657,7 +580,7 @@
                                     "connectorName": "IoTDgraph",
                                     "connectorDescription": " "
                                 },
-                                "cacheSize": 200,
+                                "cacheSize": 1,
                                 "readableExternalId": true,
                                 "explicitType": true,
                                 "typeTag": "type",
@@ -667,66 +590,22 @@
                                 "Graph": "=$activity[BuildGraph].Graph"
                             }
                         }
-                    },
-                    {
-                        "id": "ReturnSimple",
-                        "name": "ReturnSimple",
-                        "description": "",
-                        "activity": {
-                            "ref": "#actreturn"
-                        }
                     }
                 ],
                 "metadata": {
                     "input": [
                         {
-                            "name": "id",
-                            "type": "string"
-                        },
-                        {
-                            "name": "pushed",
-                            "type": "float64"
-                        },
-                        {
-                            "name": "device",
-                            "type": "string"
-                        },
-                        {
-                            "name": "created",
-                            "type": "float64"
-                        },
-                        {
-                            "name": "modified",
-                            "type": "float64"
-                        },
-                        {
-                            "name": "origin",
-                            "type": "float64"
-                        },
-                        {
-                            "name": "schedule",
-                            "type": "string"
-                        },
-                        {
-                            "name": "event",
-                            "type": "string"
-                        },
-                        {
                             "name": "gateway",
-                            "type": "string"
-                        },
-                        {
-                            "name": "reading",
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}"
+                                "value": "{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"devicesMetadata\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}"
                             }
                         }
                     ],
                     "output": [],
                     "fe_metadata": {
-                        "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"string\"},\"event\":{\"type\":\"string\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
+                        "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"gateway\":{\"type\":\"object\",\"properties\":{\"uid\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"devicesMetadata\":{\"type\":\"string\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"}}}}}"
                     }
                 }
             }
@@ -746,7 +625,22 @@
         {
             "name": "Mqtt.IoTMQTT.Password",
             "type": "string",
-            "value": "SECRET:+h8jvid9dclLsrpVCoAAfdParKRtNLg+hBI="
+            "value": ""
+        },
+        {
+            "name": "MQTTTrigger.Topic",
+            "type": "string",
+            "value": "EdgexGatewayData"
+        },
+        {
+            "name": "MQTTTrigger.MaximumQOS",
+            "type": "float64",
+            "value": 2
+        },
+        {
+            "name": "Logging.LogLevel",
+            "type": "string",
+            "value": "DEBUG"
         },
         {
             "name": "GraphBuilder_dgraph.IoTDgraph.Dgraph_Server_URL",
@@ -762,54 +656,9 @@
             "name": "GraphBuilder_dgraph.IoTDgraph.Password",
             "type": "string",
             "value": ""
-        },
-        {
-            "name": "MQTTTrigger.Topic",
-            "type": "string",
-            "value": "EdgexGatewayData"
-        },
-        {
-            "name": "MQTTTrigger.MaximumQOS",
-            "type": "float64",
-            "value": 2
-        },
-        {
-            "name": "Filtering.DeviceNames",
-            "type": "string",
-            "value": " "
-        },
-        {
-            "name": "Logging.LogLevel",
-            "type": "string",
-            "value": "DEBUG"
-        },
-        {
-            "name": "Streaming.DeviceName",
-            "type": "string",
-            "value": " "
-        },
-        {
-            "name": "Streaming.InstrumentName",
-            "type": "string",
-            "value": " "
-        },
-        {
-            "name": "Streaming.Function",
-            "type": "string",
-            "value": "avg"
-        },
-        {
-            "name": "Streaming.WindowType",
-            "type": "string",
-            "value": "tumbling"
-        },
-        {
-            "name": "Streaming.WindowSize",
-            "type": "float64",
-            "value": 5
         }
     ],
     "connections": {},
-    "contrib": "W3sicmVmIjoiZ2l0LnRpYmNvLmNvbS9naXQvcHJvZHVjdC9pcGFhcy93aS1tcXR0LmdpdC9NcXR0IiwiczNsb2NhdGlvbiI6IlRpYmNvL01xdHQifSx7InJlZiI6ImdpdC50aWJjby5jb20vZ2l0L3Byb2R1Y3QvaXBhYXMvd2ktY29udHJpYi5naXQvY29udHJpYnV0aW9ucy9HZW5lcmFsIiwiczNsb2NhdGlvbiI6IlRpYmNvL0dlbmVyYWwifSx7InJlZiI6ImdpdGh1Yi5jb20vVElCQ09Tb2Z0d2FyZS9HcmFwaEJ1aWxkZXJfVG9vbHMiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vR3JhcGhCdWlsZGVyX1Rvb2xzIn0seyJyZWYiOiJnaXRodWIuY29tL1RJQkNPU29mdHdhcmUvR3JhcGhCdWlsZGVyX2RncmFwaCIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9HcmFwaEJ1aWxkZXJfZGdyYXBoIn0seyJyZWYiOiJnaXRodWIuY29tL1RJQkNPU29mdHdhcmUvR3JhcGhCdWlsZGVyIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L0dyYXBoQnVpbGRlciJ9XQ==",
-    "fe_metadata": "UEsDBAoAAAAIAECnwVKrqSRGFQAAABMAAAAIAAAAYXBwLmpzb26rViopykxPTy1yy8kvL1ayio6tBQBQSwECFAAKAAAACABAp8FSq6kkRhUAAAATAAAACAAAAAAAAAAAAAAAAAAAAAAAYXBwLmpzb25QSwUGAAAAAAEAAQA2AAAAOwAAAAAA"
+    "contrib": "W3sicmVmIjoiZ2l0LnRpYmNvLmNvbS9naXQvcHJvZHVjdC9pcGFhcy93aS1tcXR0LmdpdC9NcXR0IiwiczNsb2NhdGlvbiI6IlRpYmNvL01xdHQifSx7InJlZiI6ImdpdC50aWJjby5jb20vZ2l0L3Byb2R1Y3QvaXBhYXMvd2ktY29udHJpYi5naXQvY29udHJpYnV0aW9ucy9HZW5lcmFsIiwiczNsb2NhdGlvbiI6IlRpYmNvL0dlbmVyYWwifSx7InJlZiI6ImdpdGh1Yi5jb20vVElCQ09Tb2Z0d2FyZS9HcmFwaEJ1aWxkZXJfZGdyYXBoIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L0dyYXBoQnVpbGRlcl9kZ3JhcGgifSx7InJlZiI6ImdpdGh1Yi5jb20vVElCQ09Tb2Z0d2FyZS9HcmFwaEJ1aWxkZXIiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vR3JhcGhCdWlsZGVyIn1d",
+    "fe_metadata": "UEsDBAoAAAAIAF2nwVKrqSRGFQAAABMAAAAIAAAAYXBwLmpzb26rViopykxPTy1yy8kvL1ayio6tBQBQSwECFAAKAAAACABdp8FSq6kkRhUAAAATAAAACAAAAAAAAAAAAAAAAAAAAAAAYXBwLmpzb25QSwUGAAAAAAEAAQA2AAAAOwAAAAAA"
 }

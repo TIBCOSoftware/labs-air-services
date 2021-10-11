@@ -6,6 +6,8 @@ COPY apps /home
 
 ARG APP_NAME=notfound
 
+RUN apk add build-base
+
 # Create flogo project
 RUN chmod a+x create_build.sh;\
     ./create_build.sh ${APP_NAME};

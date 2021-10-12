@@ -44,7 +44,7 @@
                             "flowURI": "res://flow:ProcessNotification"
                         },
                         "input": {
-                            "body": "=$.jsonValue"
+                            "body": "=$.content"
                         }
                     },
                     "name": "ProcessNotification"

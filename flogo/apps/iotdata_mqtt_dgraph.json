@@ -49,10 +49,10 @@
                         },
                         "input": {
                             "topic": "=$.topic",
-                            "data": "=$.content"
+                            "body": "=$.content"
                         }
                     },
-                    "name": "DataSource"
+                    "name": "ProcessSensorReadingsGateway"
                 }
             ]
 		}

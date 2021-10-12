@@ -49,17 +49,17 @@
                             "flowURI": "res://flow:SetupMetadata"
                         },
                         "input": {
-                            "gateway": "=$.jsonValue.gateway",
+                            "gateway": "=$.content.gateway",
                             "devices": {
                                 "mapping": {
-                                    "@foreach($.jsonValue.devices,devices)": {
+                                    "@foreach($.content.devices,devices)": {
                                         "=": "$loop"
                                     }
                                 }
                             }
                         }
                     },
-                    "name": "DataSource"
+                    "name": "SetupMetadata"
                 }
             ]
 		}

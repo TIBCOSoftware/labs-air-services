@@ -26,7 +26,7 @@
 			"ref": "github.com/SteveNY-Tibco/labs-air-contrib/trigger/mqtt",
 			"settings": {
 				"broker" : "=$property[\"Mqtt.IoTMQTT.Broker_URL\"]",
-				"id": "b2e07bc0-5404-11ea-8f02-2d62b9893e37",
+				"id": "=$property[\"Mqtt.IoTMQTT.ID\"]",
 				"keepAlive": 30,
 				"store": ":memory:",
 				"autoReconnect": true,
@@ -737,6 +737,11 @@
             "name": "Mqtt.IoTMQTT.Broker_URL",
             "type": "string",
             "value": "tcp://a0056dbbadb2f11e99e4c067e42b309c-335014729.us-west-2.elb.amazonaws.com:1883"
+        },
+        {
+            "name": "Mqtt.IoTMQTT.ID",
+            "type": "string",
+            "value": "<please set unique ID>"
         },
         {
             "name": "Mqtt.IoTMQTT.Username",

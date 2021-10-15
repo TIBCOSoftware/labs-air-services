@@ -348,7 +348,7 @@
                                             "deployNetwork": "=$flow.gateway.deployNetwork",
                                             "uuid": "=$flow.gateway.uuid",
                                             "description": "=$flow.gateway.description",
-                                            "devicesMetadata": "=utils.encodeBase64(coerce.toBytes($flow.gateway.devicesMetadata))",
+                                            "devicesMetadata": "=utils.encodeBase64(coerce.toType($flow.gateway.devicesMetadata, \"bytes\"))",
                                             "latitude": "=$flow.gateway.latitude",
                                             "longitude": "=$flow.gateway.longitude",
                                             "createdts": "=$flow.gateway.createdts",

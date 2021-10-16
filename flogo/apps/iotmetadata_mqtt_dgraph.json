@@ -18,7 +18,6 @@
     "version": "1.0.0",
     "type": "flogo:app",
     "appModel": "1.1.1",
-    "feVersion": "2.9.0",
     "triggers": [
 		{
 			"id": "MQTTSubscriber",

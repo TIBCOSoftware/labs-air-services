@@ -11,7 +11,7 @@
         "github.com/project-flogo/contrib/function/utils",
         "github.com/project-flogo/contrib/function/string",
 		"github.com/project-flogo/contrib/function/coerce",
-        "github.com/SteveNY-Tibco/labs-air-contrib/function/f1"
+        "github.com/SteveNY-Tibco/labs-lightcrane-contrib/function/f1"
     ],
     "name": "IoTMetadata_MQTT_Dgraph",
     "description": "",
@@ -123,7 +123,7 @@
                                         "platform": "=$flow.gateway.platform",
                                         "createdts": "=$flow.gateway.createdts",
                                         "updatedts": "=$flow.gateway.updatedts",
-                                        "devicesMetadata": "=f1.object2json($flow.devices)"
+                                        "devicesMetadata": "=f1.tobase64string(f1.object2json($flow.devices))"
                                     }
                                 }
                             },
@@ -347,7 +347,7 @@
                                             "deployNetwork": "=$flow.gateway.deployNetwork",
                                             "uuid": "=$flow.gateway.uuid",
                                             "description": "=$flow.gateway.description",
-                                            "devicesMetadata": "=utils.encodeBase64(coerce.toType($flow.gateway.devicesMetadata, \"bytes\"))",
+                                            "devicesMetadata": "=$flow.gateway.devicesMetadata",
                                             "latitude": "=$flow.gateway.latitude",
                                             "longitude": "=$flow.gateway.longitude",
                                             "createdts": "=$flow.gateway.createdts",

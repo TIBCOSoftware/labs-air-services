@@ -433,6 +433,28 @@
                                             "type": "gateway"
                                         }
                                     }
+                                },
+                                "Edges": {
+                                    "mapping": {
+                                        "gateway_device": {
+                                            "vertices": {
+                                                "from": "=$flow.gateway",
+                                                "to": "=$flow.device"
+                                            }
+                                        },
+                                        "device_resource": {
+                                            "vertices": {
+                                                "from": "=$flow.device",
+                                                "to": "=$flow.reading.name"
+                                            }
+                                        },
+                                        "resource_reading": {
+                                            "vertices": {
+                                                "from": "=$flow.reading.name",
+                                                "to": "=$flow.reading.id"
+                                            }
+                                        }
+                                    }
                                 }
                             },
                             "schemas": {

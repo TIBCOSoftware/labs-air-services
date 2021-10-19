@@ -258,6 +258,16 @@
                                             "type": "gateway"
                                         }
                                     }
+                                },
+                                "Edges": {
+                                    "mapping": {
+                                        "gateway_notification": {
+                                            "vertices": {
+                                                "from": "=$flow.body.gateway",
+                                                "to": "=$flow.body.uuid"
+                                            }
+                                        }
+                                    }
                                 }
                             },
                             "schemas": {

@@ -8,9 +8,9 @@
         "github.com/SteveNY-Tibco/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/SteveNY-Tibco/labs-air-contrib/trigger/mqtt",
-        "github.com/project-flogo/contrib/function/utils",
         "github.com/project-flogo/contrib/function/string",
-        "github.com/project-flogo/contrib/function/coerce"
+        "github.com/project-flogo/contrib/function/coerce",
+        "github.com/SteveNY-Tibco/labs-lightcrane-contrib/function/f1"
     ],
     "name": "IoTData_MQTT_Dgraph",
     "description": "",
@@ -225,7 +225,7 @@
                                         "device": "=$flow.reading.device",
                                         "origin": "=$flow.reading.origin",
                                         "name": "=$flow.reading.name",
-                                        "value": "=string.endsWith($flow.reading.name, \"Inferred\") ? utils.encodeBase64(coerce.toBytes($flow.reading.value)):$flow.reading.value"
+                                        "value": "=string.endsWith($flow.reading.name, \"Inferred\") ? f1.tobase64string($flow.reading.value):$flow.reading.value"
                                     }
                                 }
                             },

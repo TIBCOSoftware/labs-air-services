@@ -1,11 +1,11 @@
 {
     "imports": [
         "github.com/project-flogo/flow",
-        "github.com/SteveNY-Tibco/labs-air-contrib/activity/log",
-        "github.com/SteveNY-Tibco/labs-air-contrib/activity/graphbuilder/builder",
-        "github.com/SteveNY-Tibco/labs-air-contrib/activity/graphbuilder/dgraphupsert",
+        "github.com/TIBCOSoftware/labs-air-contrib/activity/log",
+        "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/builder",
+        "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/project-flogo/contrib/activity/actreturn",
-        "github.com/SteveNY-Tibco/labs-air-contrib/trigger/mqtt",
+        "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
 		"github.com/project-flogo/contrib/function/coerce"
     ],
     "name": "IoTNotification_MQTT_Dgraph",
@@ -19,7 +19,7 @@
 			"id": "MQTTSubscriber",
 			"name": "mqtt-trigger",
             "description": "Subscribe to an MQTT topic",
-			"ref": "github.com/SteveNY-Tibco/labs-air-contrib/trigger/mqtt",
+			"ref": "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
 			"settings": {
 				"broker" : "=$property[\"Mqtt.IoTMQTT.Broker_URL\"]",
 				"id": "=$property[\"Mqtt.IoTMQTT.ID\"]",
@@ -109,7 +109,7 @@
                                     "iteratorMappings": {},
                                     "title": "Graph",
                                     "description": "This is URL file reader",
-                                    "ref": "github.com/SteveNY-Tibco/labs-air-contrib/connector/graph",
+                                    "ref": "github.com/TIBCOSoftware/labs-air-contrib/connector/graph",
                                     "settings": [
                                         {
                                             "name": "name",
@@ -316,7 +316,7 @@
                                     "iteratorMappings": {},
                                     "title": "Dgraph Connector",
                                     "description": "This is Dgraph connector",
-                                    "ref": "github.com/SteveNY-Tibco/labs-air-contrib/connector/dgraph",
+                                    "ref": "github.com/TIBCOSoftware/labs-air-contrib/connector/dgraph",
                                     "settings": [
                                         {
                                             "name": "name",

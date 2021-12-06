@@ -1,0 +1,19 @@
+# builder image
+FROM arm64v8/golang:1.16-stretch
+
+RUN apt update;\
+    apt install git;
+
+COPY patch /home
+COPY scripts /home
+WORKDIR /home
+
+ENV GO111MODULE=off
+
+# Install flogo cli
+RUN go get -u github.com/project-flogo/cli/...;\
+    cp mod.go /go/src/github.com/project-flogo/cli/util/;\
+    cd /go/src/github.com/project-flogo/cli;\
+    go install ./...;
+
+ENV GO111MODULE=on

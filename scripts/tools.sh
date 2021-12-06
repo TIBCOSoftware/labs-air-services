@@ -8,9 +8,9 @@ function build_image(){
     local build_target_name=$5
     echo "Building image  ${build_image_name}:${build_image_tag}..."
     if [ -z ${build_target_name} ]; then 
-        docker build --no-cache -t ${build_image_name}:${build_image_tag} -f ${build_docker_file} . || exit 1
+        docker buildx build --platform --no-cache -t ${build_image_name}:${build_image_tag} -f ${build_docker_file} . || exit 1
     else 
-        docker build --target ${build_target_name} --no-cache -t ${build_image_name}:${build_image_tag} -f ${build_docker_file} . || exit 1
+        docker buildx build --platform linux/amd64,linux/arm64 --target ${build_target_name} --no-cache -t ${build_image_name}:${build_image_tag} -f ${build_docker_file} . || exit 1
     fi
 }
 

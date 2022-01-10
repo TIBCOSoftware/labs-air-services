@@ -10,4 +10,10 @@ For more information please visit [Project AIR](https://tibcosoftware.github.io/
 
 This repository contains a list of different services that form the project AIR platform.
 
+## Contributing
+
+For information regarding participation in the project, please see our
+[contributing](https://github.com/TIBCOSoftware/labs-air/CONTRIBUTING.md)
+document.
+
 ![Logo](https://tibcosoftware.github.io/TIBCO-LABS/about/tibcolabs-brand.png "Labs Logo")

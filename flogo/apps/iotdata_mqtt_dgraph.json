@@ -114,18 +114,9 @@
                                         "created": "=$iteration[value].created",
                                         "origin": "=$iteration[value].origin",
                                         "modified": "=$iteration[value].modified",
-                                        "device": "=$iteration[value].device",
-                                        "name": "=$iteration[value].name",
+                                        "deviceName": "=$iteration[value].deviceName",
+                                        "resourceName": "=$iteration[value].resourceName",
                                         "value": "=$iteration[value].value"
-                                    }
-                                }
-                            },
-                            "schemas": {
-                                "input": {
-                                    "input": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}",
-                                        "fe_metadata": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
                                     }
                                 }
                             }
@@ -151,14 +142,11 @@
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
+                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
                             }
                         }
                     ],
-                    "output": [],
-                    "fe_metadata": {
-                        "input": "{\"type\":\"object\",\"title\":\"MQTTSubscriber\",\"properties\":{\"topic\":{\"type\":\"string\",\"required\":false},\"retained\":{\"type\":\"boolean\",\"required\":false},\"qos\":{\"type\":\"integer\",\"required\":false},\"body\":{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}}}}"
-                    }
+                    "output": []
                 }
             }
         },
@@ -203,7 +191,7 @@
                             "input": {
                                 "Log Level": "INFO",
                                 "flowInfo": false,
-                                "message": "=\"Processing single reading for: \" + $flow.reading.device + \"---\" + $flow.reading.name"
+                                "message": "=\"Processing single reading for: \" + $flow.reading.deviceName + \"---\" + $flow.reading.resourceName"
                             }
                         }
                     },
@@ -216,39 +204,16 @@
                             "settings": {
                                 "ArrayMode": false,
                                 "WindowSize": 1,
-                                "DataFields": "[{\"Name\":\"id\",\"Type\":\"String\"},{\"Name\":\"device\",\"Type\":\"String\"},{\"Name\":\"origin\",\"Type\":\"Long\"},{\"Name\":\"name\",\"Type\":\"String\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
+                                "DataFields": "[{\"Name\":\"id\",\"Type\":\"String\"},{\"Name\":\"deviceName\",\"Type\":\"String\"},{\"Name\":\"origin\",\"Type\":\"Long\"},{\"Name\":\"resourceName\",\"Type\":\"String\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
                             },
                             "input": {
                                 "Input": {
                                     "mapping": {
                                         "id": "=$flow.reading.id",
-                                        "device": "=$flow.reading.device",
+                                        "deviceName": "=$flow.reading.deviceName",
                                         "origin": "=$flow.reading.origin",
-                                        "name": "=$flow.reading.name",
-                                        "value": "=string.endsWith($flow.reading.name, \"Inferred\") ? f1.tobase64string($flow.reading.value):$flow.reading.value"
-                                    }
-                                }
-                            },
-                            "schemas": {
-                                "input": {
-                                    "Input": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"device\":{\"type\":\"string\"},\"origin\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}",
-                                        "fe_metadata": "{\"id\":\"2\",\"device\":\"2\",\"origin\":2,\"name\":\"2\",\"value\":\"2\"}"
-                                    }
-                                },
-                                "output": {
-                                    "Output": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"device\":{\"type\":\"string\"},\"origin\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"},\"LastElement\":{\"type\":\"boolean\"}}}}",
-                                        "fe_metadata": "[{\"id\":\"2\",\"device\":\"2\",\"origin\":2,\"name\":\"2\",\"value\":\"2\",\"LastElement\":true}]"
-                                    }
-                                },
-                                "settings": {
-                                    "DataFields": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"Name\":{\"type\":\"string\"},\"Type\":{\"type\":\"string\"}},\"required\":[\"Name\",\"Type\"]}}",
-                                        "fe_metadata": "[{\"Name\":\"id\",\"Type\":\"String\"},{\"Name\":\"device\",\"Type\":\"String\"},{\"Name\":\"origin\",\"Type\":\"Long\"},{\"Name\":\"name\",\"Type\":\"String\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
+                                        "resourceName": "=$flow.reading.resourceName",
+                                        "value": "=string.endsWith($flow.reading.resourceName, \"Inferred\") ? f1.tobase64string($flow.reading.value):$flow.reading.value"
                                     }
                                 }
                             }
@@ -415,15 +380,15 @@
                                             "type": "reading"
                                         },
                                         "resource": {
-                                            "uuid": "=string.concat($iteration[value].device, \"_\", $iteration[value].name)",
+                                            "uuid": "=string.concat($iteration[value].deviceName, \"_\", $iteration[value].resourceName)",
                                             "resource": "resource",
-                                            "name": "=$iteration[value].name",
+                                            "name": "=$iteration[value].resourceName",
                                             "type": "resource"
                                         },
                                         "device": {
-                                            "uuid": "=$iteration[value].device",
+                                            "uuid": "=$iteration[value].deviceName",
                                             "device": "device",
-                                            "name": "=$iteration[value].device",
+                                            "name": "=$iteration[value].deviceName",
                                             "type": "device"
                                         },
                                         "gateway": {
@@ -439,47 +404,21 @@
                                         "gateway_device": {
                                             "vertices": {
                                                 "from": "=$flow.gateway",
-                                                "to": "=$flow.device"
+                                                "to": "=$iteration[value].deviceName"
                                             }
                                         },
                                         "device_resource": {
                                             "vertices": {
-                                                "from": "=$flow.device",
-                                                "to": "=$flow.reading.name"
+                                                "from": "=$iteration[value].deviceName",
+                                                "to": "=$iteration[value].resourceName"
                                             }
                                         },
                                         "resource_reading": {
                                             "vertices": {
-                                                "from": "=$flow.reading.name",
-                                                "to": "=$flow.reading.id"
+                                                "from": "=$iteration[value].resourceName",
+                                                "to": "=$iteration[value].id"
                                             }
                                         }
-                                    }
-                                }
-                            },
-                            "schemas": {
-                                "input": {
-                                    "Nodes": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"reading\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"uuid\":{\"type\":\"string\"},\"reading\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"type\":{\"type\":\"string\"}}},\"resource\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"uuid\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"}}},\"device\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"uuid\":{\"type\":\"string\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"operatingState\":{\"type\":\"string\"},\"adminState\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"type\":{\"type\":\"string\"}}},\"gateway\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"dgraph.type\":{\"type\":\"string\"},\"gateway\":{\"type\":\"string\"},\"accessToken\":{\"type\":\"string\"},\"username\":{\"type\":\"string\"},\"platform\":{\"type\":\"string\"},\"address\":{\"type\":\"string\"},\"router\":{\"type\":\"string\"},\"routerPort\":{\"type\":\"string\"},\"deployNetwork\":{\"type\":\"string\"},\"uuid\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"devicesMetadata\":{\"type\":\"string\"},\"latitude\":{\"type\":\"number\"},\"longitude\":{\"type\":\"number\"},\"createdts\":{\"type\":\"number\"},\"updatedts\":{\"type\":\"number\"},\"type\":{\"type\":\"string\"}}}}}",
-                                        "fe_metadata": "{\"reading\":{\"_skipCondition\":false,\"uuid\":\"2\",\"reading\":\"2\",\"value\":\"2\",\"created\":2,\"type\":\"2\"},\"resource\":{\"_skipCondition\":false,\"uuid\":\"2\",\"resource\":\"2\",\"name\":\"2\",\"type\":\"2\"},\"device\":{\"_skipCondition\":false,\"uuid\":\"2\",\"device\":\"2\",\"name\":\"2\",\"operatingState\":\"2\",\"adminState\":\"2\",\"description\":\"2\",\"type\":\"2\"},\"gateway\":{\"_skipCondition\":false,\"dgraph.type\":\"2\",\"gateway\":\"2\",\"accessToken\":\"2\",\"username\":\"2\",\"platform\":\"2\",\"address\":\"2\",\"router\":\"2\",\"routerPort\":\"2\",\"deployNetwork\":\"2\",\"uuid\":\"2\",\"description\":\"2\",\"devicesMetadata\":\"2\",\"latitude\":2,\"longitude\":2,\"createdts\":2,\"updatedts\":2,\"type\":\"2\"}}"
-                                    },
-                                    "Edges": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"gateway_device\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"vertices\":{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\"},\"to\":{\"type\":\"string\"}}}}},\"device_resource\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"vertices\":{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\"},\"to\":{\"type\":\"string\"}}}}},\"resource_reading\":{\"type\":\"object\",\"properties\":{\"_skipCondition\":{\"type\":\"boolean\"},\"vertices\":{\"type\":\"object\",\"properties\":{\"from\":{\"type\":\"string\"},\"to\":{\"type\":\"string\"}}}}}}}",
-                                        "fe_metadata": "{\"gateway_device\":{\"_skipCondition\":false,\"vertices\":{\"from\":\"string\",\"to\":\"string\"}},\"device_resource\":{\"_skipCondition\":false,\"vertices\":{\"from\":\"string\",\"to\":\"string\"}},\"resource_reading\":{\"_skipCondition\":false,\"vertices\":{\"from\":\"string\",\"to\":\"string\"}}}"
-                                    },
-                                    "PassThroughData": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{}}",
-                                        "fe_metadata": "{}"
-                                    }
-                                },
-                                "output": {
-                                    "PassThroughDataOut": {
-                                        "type": "json",
-                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{}}",
-                                        "fe_metadata": "{}"
                                     }
                                 }
                             }
@@ -742,14 +681,11 @@
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}"
+                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}"
                             }
                         }
                     ],
-                    "output": [],
-                    "fe_metadata": {
-                        "input": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"string\"},\"event\":{\"type\":\"string\"},\"gateway\":{\"type\":\"string\"},\"reading\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
-                    }
+                    "output": []
                 }
             }
         }
@@ -836,7 +772,5 @@
             "value": 5
         }
     ],
-    "connections": {},
-    "contrib": "W3sicmVmIjoiZ2l0LnRpYmNvLmNvbS9naXQvcHJvZHVjdC9pcGFhcy93aS1tcXR0LmdpdC9NcXR0IiwiczNsb2NhdGlvbiI6IlRpYmNvL01xdHQifSx7InJlZiI6ImdpdC50aWJjby5jb20vZ2l0L3Byb2R1Y3QvaXBhYXMvd2ktY29udHJpYi5naXQvY29udHJpYnV0aW9ucy9HZW5lcmFsIiwiczNsb2NhdGlvbiI6IlRpYmNvL0dlbmVyYWwifSx7InJlZiI6ImdpdGh1Yi5jb20vVElCQ09Tb2Z0d2FyZS9HcmFwaEJ1aWxkZXJfVG9vbHMiLCJzM2xvY2F0aW9uIjoie1VTRVJJRH0vR3JhcGhCdWlsZGVyX1Rvb2xzIn0seyJyZWYiOiJnaXRodWIuY29tL1RJQkNPU29mdHdhcmUvR3JhcGhCdWlsZGVyX2RncmFwaCIsInMzbG9jYXRpb24iOiJ7VVNFUklEfS9HcmFwaEJ1aWxkZXJfZGdyYXBoIn0seyJyZWYiOiJnaXRodWIuY29tL1RJQkNPU29mdHdhcmUvR3JhcGhCdWlsZGVyIiwiczNsb2NhdGlvbiI6IntVU0VSSUR9L0dyYXBoQnVpbGRlciJ9XQ==",
-    "fe_metadata": "UEsDBAoAAAAIAECnwVKrqSRGFQAAABMAAAAIAAAAYXBwLmpzb26rViopykxPTy1yy8kvL1ayio6tBQBQSwECFAAKAAAACABAp8FSq6kkRhUAAAATAAAACAAAAAAAAAAAAAAAAAAAAAAAYXBwLmpzb25QSwUGAAAAAAEAAQA2AAAAOwAAAAAA"
+    "connections": {}
 }

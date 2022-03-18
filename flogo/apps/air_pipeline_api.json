@@ -29,7 +29,7 @@
                     "description": "",
                     "settings": {
                         "method": "GET",
-                        "path": "/v1/air"
+                        "path": "/air/v1/pipelines"
                     },
                     "action": {
                         "ref": "github.com/project-flogo/flow",

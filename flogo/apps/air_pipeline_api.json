@@ -1,0 +1,177 @@
+{
+    "imports": [
+        "github.com/project-flogo/flow",
+        "github.com/TIBCOSoftware/labs-air-contrib/function/air",
+        "github.com/TIBCOSoftware/labs-air-contrib/activity/log",
+        "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/httpclient",
+        "github.com/project-flogo/contrib/activity/actreturn",
+        "github.com/project-flogo/contrib/trigger/rest"
+    ],
+    "name": "AirPipelineAPI",
+    "description": "",
+    "version": "1.0.0",
+    "type": "flogo:app",
+    "appModel": "1.1.1",
+    "triggers": [
+    	{
+            "ref": "#rest",
+            "name": "tibco-wi-rest",
+            "description": "Simple REST Trigger",
+            "settings": {
+                "port": 9999,
+                "enableTLS": false,
+                "certFile": "",
+                "keyFile": ""
+            },
+            "id": "ReceiveHTTPMessage",
+            "handlers": [
+                {
+                    "description": "",
+                    "settings": {
+                        "method": "GET",
+                        "path": "/v1/air"
+                    },
+                    "action": {
+                        "ref": "github.com/project-flogo/flow",
+                        "settings": {
+                            "flowURI": "res://flow:getPipelines_GET"
+                        },
+                        "output": {
+                            "data": "=$.responseBody"
+                        }
+                    },
+                    "reply": {
+                        "code": 200,
+                        "message": {}
+                    },
+                    "name": "getPipelines_GET"
+                }
+            ]
+        }
+    ],
+    "resources": [
+        {
+            "id": "flow:getPipelines_GET",
+            "data": {
+                "name": "getPipelines_GET",
+                "description": "",
+                "links": [
+                    {
+                        "id": 1,
+                        "from": "LogRequest",
+                        "to": "HTTPClient",
+                        "type": "default"
+                    },
+                    {
+                        "id": 2,
+                        "from": "HTTPClient",
+                        "to": "LogResult",
+                        "type": "default"
+                    },
+                    {
+                        "id": 3,
+                        "from": "LogResult",
+                        "to": "Return",
+                        "type": "default"
+                    }
+                ],
+                "tasks": [
+                    {
+                        "id": "LogRequest",
+                        "name": "LogRequest",
+                        "description": "Logs a message",
+                        "activity": {
+                            "ref": "#log",
+                            "input": {
+                                "message": "*** Request coming in ***",
+                                "addDetails": false
+                            }
+                        }
+                    },
+                    {
+                        "id": "HTTPClient",
+                        "name": "HTTPClient",
+                        "description": "This activity build docker image from Dockerfile",
+                        "activity": {
+                            "ref": "#httpclient",
+                            "settings": {
+                                "method": "POST",
+                                "timeout": "1000",
+                                "urlMappingString": "",
+                                "urlMapping": "",
+                                "leftToken": "$",
+                                "rightToken": "$",
+                                "variablesDef": "",
+                                "httpHeaders": "[{\"Key\":\"Accept\",\"Value\":\"application/json\"},{\"Key\":\"Content-Type\",\"Value\":\"application/graphql+-\"}]"
+                            },
+                            "input": {
+                                "URL": "=$property[\"DgraphURL\"]",
+                                "Body": "{ resp(func: has(pipeline)) { uid name created modified description status logLevel subscriptionTopic } }",
+                                "SkipCondition": false
+                            },
+                            "output": {
+                                "Success": false
+                            },
+                            "schemas": {
+                                "input": {
+                                    "Variables": {
+                                        "type": "json",
+                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{}}"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "id": "LogResult",
+                        "name": "LogResult",
+                        "description": "Logs a message",
+                        "activity": {
+                            "ref": "#log",
+                            "input": {
+                                "message": "",
+                                "addDetails": false
+                            }
+                        }
+                    },
+                    {
+                        "id": "Return",
+                        "name": "Return",
+                        "description": "Simple Return Activity",
+                        "activity": {
+                            "ref": "#actreturn",
+                            "settings": {
+                                "mappings": {
+                                    "code": 200,
+                                    "responseBody": "=air.getsubobject(air.getsubobject(air.json2object($activity[HTTPClient].Data),\"data\"),\"resp\")"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "metadata": {
+                    "input": [],
+                    "output": [
+                        {
+                            "name": "responseBody",
+                            "type": "array",
+                            "schema": {
+                                "type": "json",
+                                "value": "{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"subscriptionTopic\":{\"type\":\"string\"},\"status\":{\"type\":\"string\"}}}}"
+                            }
+                        }
+                    ]
+                },
+                "explicitReply": true
+            }
+        }
+    ],
+    "properties": [
+        {
+            "name": "DgraphURL",
+            "type": "string",
+            "value": "not set yet"
+        }
+    ],
+    "connections": {}
+}

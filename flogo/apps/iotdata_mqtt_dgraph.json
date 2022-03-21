@@ -219,7 +219,7 @@
                             "input": {
                                 "Mapping": {
                                     "mapping": {
-                                        "Value": "=air.airdataselector($flow.gateway, $flow.reading, null, array.get(array.create(\"@f1..objectValue@\", \"@f1..binaryValue@\", \"@f1..value@\"),f1.airfirsttrue($flow.reading, [{\"valueType\":\"Object\"}, {\"valueType\":\"Binary\"}])))"
+                                        "Value": "=air.airdataselector($flow.gateway, $flow.reading, null, array.get(array.create(\"@f1..objectValue@\", \"@f1..binaryValue@\", \"@f1..value@\"),f1.airfirsttrue($flow.reading, air.json2object(\"[{\\\"valueType\\\":\\\"Object\\\"}, {\\\"valueType\\\":\\\"Binary\\\"}]\"))))"
                                     }
                                 }
                             }

@@ -11,6 +11,7 @@
         "github.com/TIBCOSoftware/labs-lightcrane-contrib/function/f1",
         "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/mapping",
         "github.com/project-flogo/contrib/activity/actreturn",
+        "github.com/project-flogo/contrib/function/array",
         "github.com/project-flogo/contrib/function/string",
         "github.com/project-flogo/contrib/function/coerce"
     ],

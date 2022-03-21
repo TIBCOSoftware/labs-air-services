@@ -3,14 +3,15 @@
         "github.com/project-flogo/flow",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/log",
         "github.com/project-flogo/flow/activity/subflow",
+        "github.com/TIBCOSoftware/labs-air-contrib/function/air",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/accumulator",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/builder",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
-        "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
+        "github.com/TIBCOSoftware/labs-lightcrane-contrib/function/f1",
+        "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/project-flogo/contrib/function/string",
-        "github.com/project-flogo/contrib/function/coerce",
-        "github.com/TIBCOSoftware/labs-lightcrane-contrib/function/f1"
+        "github.com/project-flogo/contrib/function/coerce"
     ],
     "name": "IoTData_MQTT_Dgraph",
     "description": "",
@@ -116,7 +117,10 @@
                                         "modified": "=$iteration[value].modified",
                                         "deviceName": "=$iteration[value].deviceName",
                                         "resourceName": "=$iteration[value].resourceName",
-                                        "value": "=$iteration[value].value"
+                                        "value": "=$iteration[value].value",
+                                        "objectValue": "=$iteration[value].objectValue",
+                                        "binaryValue": "=$iteration[value].binaryValue",
+                                        "valueType": "=$iteration[value].valueType"
                                     }
                                 }
                             }
@@ -142,7 +146,7 @@
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}}}}"
+                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"device\":{\"type\":\"string\"},\"created\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"schedule\":{\"type\":\"null\"},\"event\":{\"type\":\"null\"},\"gateway\":{\"type\":\"string\"},\"readings\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"},\"objectValue\":{\"type\":\"string\"},\"binaryValue\":{\"type\":\"string\"},\"valueType\":{\"type\":\"string\"}}}}}"
                             }
                         }
                     ],
@@ -159,23 +163,29 @@
                     {
                         "id": 1,
                         "from": "LogSingleReading",
-                        "to": "AccumulatorSimple",
+                        "to": "MappingValue",
                         "type": "default"
                     },
                     {
                         "id": 2,
+                        "from": "MappingValue",
+                        "to": "AccumulatorSimple",
+                        "type": "default"
+                    },
+                    {
+                        "id": 3,
                         "from": "AccumulatorSimple",
                         "to": "BuildGraph",
                         "type": "default"
                     },
                     {
-                        "id": 3,
+                        "id": 4,
                         "from": "BuildGraph",
                         "to": "DgraphUpsertSimple",
                         "type": "default"
                     },
                     {
-                        "id": 4,
+                        "id": 5,
                         "from": "DgraphUpsertSimple",
                         "to": "ReturnSimple",
                         "type": "default"
@@ -192,6 +202,25 @@
                                 "Log Level": "INFO",
                                 "flowInfo": false,
                                 "message": "=\"Processing single reading for: \" + $flow.reading.deviceName + \"---\" + $flow.reading.resourceName"
+                            }
+                        }
+                    },
+                    {
+                        "id": "MappingValue",
+                        "name": "MappingValue",
+                        "description": "Mapping field from input to output",
+                        "activity": {
+                            "ref": "#mapping",
+                            "settings": {
+                                "IsArray": false,
+                                "MappingFields": "[{\"Name\":\"Value\",\"Type\":\"String\"}]"
+                            },
+                            "input": {
+                                "Mapping": {
+                                    "mapping": {
+                                        "Value": "=air.airdataselector($flow.gateway, $flow.reading, null, array.get(array.create(\"@f1..objectValue@\", \"@f1..binaryValue@\", \"@f1..value@\"),f1.airfirsttrue($flow.reading, [{\"valueType\":\"Object\"}, {\"valueType\":\"Binary\"}])))"
+                                    }
+                                }
                             }
                         }
                     },
@@ -213,7 +242,7 @@
                                         "deviceName": "=$flow.reading.deviceName",
                                         "origin": "=$flow.reading.origin",
                                         "resourceName": "=$flow.reading.resourceName",
-                                        "value": "=string.endsWith($flow.reading.resourceName, \"Inferred\") ? f1.tobase64string($flow.reading.value):$flow.reading.value"
+                                        "value": "=string.endsWith($flow.reading.resourceName, \"Inferred\") ? f1.tobase64string($flow.reading.value):$activity[MappingValue].Data.Value"
                                     }
                                 }
                             }
@@ -308,8 +337,8 @@
                                                 "visible": true
                                             },
                                             "value": {
-                                                "filename": "IotModel.json",
-                                                "content": "data:application/json;base64,ewoJIm5vZGVzIjogWwoJCXsKCQkJIm5hbWUiOiAicmVhZGluZyIsCgkJCSJrZXkiOiBbCgkJCQkidXVpZCIKCQkJXSwKCQkJImF0dHJpYnV0ZXMiOiBbCgkJCQl7CgkJCQkJIm5hbWUiOiAidXVpZCIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJyZWFkaW5nIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInZhbHVlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImNyZWF0ZWQiLAoJCQkJCSJ0eXBlIjogIkxvbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInR5cGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0KCQkJXQoJCX0sCgkJewoJCQkibmFtZSI6ICJyZXNvdXJjZSIsCgkJCSJrZXkiOiBbCgkJCQkidXVpZCIKCQkJXSwKCQkJImF0dHJpYnV0ZXMiOiBbCgkJCQl7CgkJCQkJIm5hbWUiOiAidXVpZCIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJyZXNvdXJjZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJuYW1lIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInR5cGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0KCQkJXQoJCX0sCgkJewoJCQkibmFtZSI6ICJkZXZpY2UiLAoJCQkia2V5IjogWwoJCQkJInV1aWQiCgkJCV0sCgkJCSJhdHRyaWJ1dGVzIjogWwoJCQkJewoJCQkJCSJuYW1lIjogInV1aWQiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGV2aWNlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogIm5hbWUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAib3BlcmF0aW5nU3RhdGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiYWRtaW5TdGF0ZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJkZXNjcmlwdGlvbiIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJ0eXBlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9CgkJCV0KCQl9LAoJCXsKCQkJIm5hbWUiOiAiZ2F0ZXdheSIsCgkJCSJrZXkiOiBbCgkJCQkidXVpZCIKCQkJXSwKCQkJImF0dHJpYnV0ZXMiOiBbCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGdyYXBoLnR5cGUiCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImdhdGV3YXkiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiYWNjZXNzVG9rZW4iLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAidXNlcm5hbWUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAicGxhdGZvcm0iLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiYWRkcmVzcyIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJyb3V0ZXIiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAicm91dGVyUG9ydCIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJkZXBsb3lOZXR3b3JrIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInV1aWQiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGVzY3JpcHRpb24iLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGV2aWNlc01ldGFkYXRhIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImxhdGl0dWRlIiwKCQkJCQkidHlwZSI6ICJEb3VibGUiCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImxvbmdpdHVkZSIsCgkJCQkJInR5cGUiOiAiRG91YmxlIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJjcmVhdGVkdHMiLAoJCQkJCSJ0eXBlIjogIkxvbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInVwZGF0ZWR0cyIsCgkJCQkJInR5cGUiOiAiTG9uZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAidHlwZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfQoJCQldCgkJfQoJXSwKCSJlZGdlcyI6IFsKCQl7CgkJCSJ0byI6ICJkZXZpY2UiLAoJCQkibmFtZSI6ICJnYXRld2F5X2RldmljZSIsCgkJCSJmcm9tIjogImdhdGV3YXkiLAoJCQkiZGlyZWN0aW9uIjogMgoJCX0sCgkJewoJCQkidG8iOiAicmVzb3VyY2UiLAoJCQkibmFtZSI6ICJkZXZpY2VfcmVzb3VyY2UiLAoJCQkiZnJvbSI6ICJkZXZpY2UiLAoJCQkiZGlyZWN0aW9uIjogMgoJCX0sCgkJewoJCQkidG8iOiAicmVhZGluZyIsCgkJCSJuYW1lIjogInJlc291cmNlX3JlYWRpbmciLAoJCQkiZnJvbSI6ICJyZXNvdXJjZSIsCgkJCSJkaXJlY3Rpb24iOiAyCgkJfQoJXQp9"
+                                                "filename": "IotModel2.json",
+                                                "content": "data:application/json;base64,ewoJIm5vZGVzIjogWwoJCXsKCQkJIm5hbWUiOiAicmVhZGluZyIsCgkJCSJrZXkiOiBbCgkJCQkidXVpZCIKCQkJXSwKCQkJImF0dHJpYnV0ZXMiOiBbCgkJCQl7CgkJCQkJIm5hbWUiOiAidXVpZCIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJyZWFkaW5nIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInZhbHVlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImNyZWF0ZWQiLAoJCQkJCSJ0eXBlIjogIkxvbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInR5cGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0KCQkJXQoJCX0sCgkJewoJCQkibmFtZSI6ICJyZXNvdXJjZSIsCgkJCSJrZXkiOiBbCgkJCQkidXVpZCIKCQkJXSwKCQkJImF0dHJpYnV0ZXMiOiBbCgkJCQl7CgkJCQkJIm5hbWUiOiAidXVpZCIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJyZXNvdXJjZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJuYW1lIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInR5cGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAidmFsdWVUeXBlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9CgkJCV0KCQl9LAoJCXsKCQkJIm5hbWUiOiAiZGV2aWNlIiwKCQkJImtleSI6IFsKCQkJCSJ1dWlkIgoJCQldLAoJCQkiYXR0cmlidXRlcyI6IFsKCQkJCXsKCQkJCQkibmFtZSI6ICJ1dWlkIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImRldmljZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJuYW1lIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogIm9wZXJhdGluZ1N0YXRlIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImFkbWluU3RhdGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGVzY3JpcHRpb24iLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAidHlwZSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfQoJCQldCgkJfSwKCQl7CgkJCSJuYW1lIjogImdhdGV3YXkiLAoJCQkia2V5IjogWwoJCQkJInV1aWQiCgkJCV0sCgkJCSJhdHRyaWJ1dGVzIjogWwoJCQkJewoJCQkJCSJuYW1lIjogImRncmFwaC50eXBlIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJnYXRld2F5IiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImFjY2Vzc1Rva2VuIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInVzZXJuYW1lIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInBsYXRmb3JtIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImFkZHJlc3MiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAicm91dGVyIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInJvdXRlclBvcnQiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiZGVwbG95TmV0d29yayIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJ1dWlkIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImRlc2NyaXB0aW9uIiwKCQkJCQkidHlwZSI6ICJTdHJpbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogImRldmljZXNNZXRhZGF0YSIsCgkJCQkJInR5cGUiOiAiU3RyaW5nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJsYXRpdHVkZSIsCgkJCQkJInR5cGUiOiAiRG91YmxlIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJsb25naXR1ZGUiLAoJCQkJCSJ0eXBlIjogIkRvdWJsZSIKCQkJCX0sCgkJCQl7CgkJCQkJIm5hbWUiOiAiY3JlYXRlZHRzIiwKCQkJCQkidHlwZSI6ICJMb25nIgoJCQkJfSwKCQkJCXsKCQkJCQkibmFtZSI6ICJ1cGRhdGVkdHMiLAoJCQkJCSJ0eXBlIjogIkxvbmciCgkJCQl9LAoJCQkJewoJCQkJCSJuYW1lIjogInR5cGUiLAoJCQkJCSJ0eXBlIjogIlN0cmluZyIKCQkJCX0KCQkJXQoJCX0KCV0sCgkiZWRnZXMiOiBbCgkJewoJCQkidG8iOiAiZGV2aWNlIiwKCQkJIm5hbWUiOiAiZ2F0ZXdheV9kZXZpY2UiLAoJCQkiZnJvbSI6ICJnYXRld2F5IiwKCQkJImRpcmVjdGlvbiI6IDIKCQl9LAoJCXsKCQkJInRvIjogInJlc291cmNlIiwKCQkJIm5hbWUiOiAiZGV2aWNlX3Jlc291cmNlIiwKCQkJImZyb20iOiAiZGV2aWNlIiwKCQkJImRpcmVjdGlvbiI6IDIKCQl9LAoJCXsKCQkJInRvIjogInJlYWRpbmciLAoJCQkibmFtZSI6ICJyZXNvdXJjZV9yZWFkaW5nIiwKCQkJImZyb20iOiAicmVzb3VyY2UiLAoJCQkiZGlyZWN0aW9uIjogMgoJCX0KCV0KfQ=="
                                             }
                                         },
                                         {
@@ -320,7 +349,7 @@
                                                 "valid": true,
                                                 "visible": false
                                             },
-                                            "value": "{\n\t\"nodes\": [\n\t\t{\n\t\t\t\"name\": \"reading\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"reading\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"value\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"created\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"resource\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"resource\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"name\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"device\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"device\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"name\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"operatingState\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"adminState\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"description\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"gateway\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"dgraph.type\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"gateway\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"accessToken\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"username\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"platform\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"address\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"router\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"routerPort\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"deployNetwork\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"description\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"devicesMetadata\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"latitude\",\n\t\t\t\t\t\"type\": \"Double\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"longitude\",\n\t\t\t\t\t\"type\": \"Double\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"createdts\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"updatedts\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"edges\": [\n\t\t{\n\t\t\t\"to\": \"device\",\n\t\t\t\"name\": \"gateway_device\",\n\t\t\t\"from\": \"gateway\",\n\t\t\t\"direction\": 2\n\t\t},\n\t\t{\n\t\t\t\"to\": \"resource\",\n\t\t\t\"name\": \"device_resource\",\n\t\t\t\"from\": \"device\",\n\t\t\t\"direction\": 2\n\t\t},\n\t\t{\n\t\t\t\"to\": \"reading\",\n\t\t\t\"name\": \"resource_reading\",\n\t\t\t\"from\": \"resource\",\n\t\t\t\"direction\": 2\n\t\t}\n\t]\n}"
+                                            "value": "{\n\t\"nodes\": [\n\t\t{\n\t\t\t\"name\": \"reading\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"reading\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"value\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"created\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"resource\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"resource\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"name\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"valueType\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"device\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"device\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"name\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"operatingState\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"adminState\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"description\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t},\n\t\t{\n\t\t\t\"name\": \"gateway\",\n\t\t\t\"key\": [\n\t\t\t\t\"uuid\"\n\t\t\t],\n\t\t\t\"attributes\": [\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"dgraph.type\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"gateway\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"accessToken\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"username\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"platform\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"address\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"router\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"routerPort\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"deployNetwork\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"uuid\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"description\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"devicesMetadata\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"latitude\",\n\t\t\t\t\t\"type\": \"Double\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"longitude\",\n\t\t\t\t\t\"type\": \"Double\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"createdts\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"updatedts\",\n\t\t\t\t\t\"type\": \"Long\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"name\": \"type\",\n\t\t\t\t\t\"type\": \"String\"\n\t\t\t\t}\n\t\t\t]\n\t\t}\n\t],\n\t\"edges\": [\n\t\t{\n\t\t\t\"to\": \"device\",\n\t\t\t\"name\": \"gateway_device\",\n\t\t\t\"from\": \"gateway\",\n\t\t\t\"direction\": 2\n\t\t},\n\t\t{\n\t\t\t\"to\": \"resource\",\n\t\t\t\"name\": \"device_resource\",\n\t\t\t\"from\": \"device\",\n\t\t\t\"direction\": 2\n\t\t},\n\t\t{\n\t\t\t\"to\": \"reading\",\n\t\t\t\"name\": \"resource_reading\",\n\t\t\t\"from\": \"resource\",\n\t\t\t\"direction\": 2\n\t\t}\n\t]\n}"
                                         }
                                     ],
                                     "outputs": [],
@@ -383,7 +412,8 @@
                                             "uuid": "=string.concat($iteration[value].deviceName, \"_\", $iteration[value].resourceName)",
                                             "resource": "resource",
                                             "name": "=$iteration[value].resourceName",
-                                            "type": "resource"
+                                            "type": "resource",
+                                            "valueType": "=$iteration[value].valueType"
                                         },
                                         "device": {
                                             "uuid": "=$iteration[value].deviceName",
@@ -681,7 +711,7 @@
                             "type": "object",
                             "schema": {
                                 "type": "json",
-                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"}}"
+                                "value": "{\"id\":{\"type\":\"string\"},\"pushed\":{\"type\":\"number\"},\"created\":{\"type\":\"number\"},\"origin\":{\"type\":\"number\"},\"modified\":{\"type\":\"number\"},\"deviceName\":{\"type\":\"string\"},\"resourceName\":{\"type\":\"string\"},\"value\":{\"type\":\"string\"},\"objectValue\":{\"type\":\"string\"},\"binaryValue\":{\"type\":\"string\"},\"valueType\":{\"type\":\"string\"}}"
                             }
                         }
                     ],

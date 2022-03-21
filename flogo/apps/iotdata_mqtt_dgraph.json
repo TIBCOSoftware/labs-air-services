@@ -9,6 +9,7 @@
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
         "github.com/TIBCOSoftware/labs-lightcrane-contrib/function/f1",
+        "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/mapping",
         "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/project-flogo/contrib/function/string",
         "github.com/project-flogo/contrib/function/coerce"
@@ -18,7 +19,6 @@
     "version": "1.0.0",
     "type": "flogo:app",
     "appModel": "1.1.1",
-    "feVersion": "2.9.0",
     "triggers": [
 		{
 			"id": "MQTTSubscriber",

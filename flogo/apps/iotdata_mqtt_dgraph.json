@@ -8,7 +8,6 @@
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/builder",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
-        "github.com/TIBCOSoftware/labs-lightcrane-contrib/function/f1",
         "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/mapping",
         "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/project-flogo/contrib/function/array",
@@ -219,7 +218,7 @@
                             "input": {
                                 "Mapping": {
                                     "mapping": {
-                                        "Value": "=air.airdataselector($flow.gateway, $flow.reading, null, array.get(array.create(\"@f1..objectValue@\", \"@f1..binaryValue@\", \"@f1..value@\"),f1.airfirsttrue($flow.reading, air.json2object(\"[{\\\"valueType\\\":\\\"Object\\\"}, {\\\"valueType\\\":\\\"Binary\\\"}]\"))))"
+                                        "Value": "=air.airdataselector($flow.gateway, $flow.reading, null, array.get(array.create(\"@f1..objectValue@\", \"@f1..binaryValue@\", \"@f1..value@\"),air.airfirsttrue($flow.reading, air.json2object(\"[{\\\"valueType\\\":\\\"Object\\\"}, {\\\"valueType\\\":\\\"Binary\\\"}]\"))))"
                                     }
                                 }
                             }
@@ -243,7 +242,8 @@
                                         "deviceName": "=$flow.reading.deviceName",
                                         "origin": "=$flow.reading.origin",
                                         "resourceName": "=$flow.reading.resourceName",
-                                        "value": "=string.endsWith($flow.reading.resourceName, \"Inferred\") ? f1.tobase64string($flow.reading.value):$activity[MappingValue].Data.Value"
+                                        "valueType": "=$flow.reading.valueType",
+                                        "value": "=string.endsWith($flow.reading.resourceName, \"Inferred\") ? air.tobase64string($flow.reading.value):air.ternary(\"Object\"==$flow.reading.valueType, air.object2json($activity[MappingValue].Data.Value), $activity[MappingValue].Data.Value)"
                                     }
                                 }
                             }
@@ -405,7 +405,7 @@
                                         "reading": {
                                             "uuid": "=$iteration[value].id",
                                             "reading": "reading",
-                                            "value": "=$iteration[value].value",
+                                            "value": "=air.ternary(\"Binary\"==$iteration[value].valueType||\"Object\"==$iteration[value].valueType, air.tobase64string($iteration[value].value), $iteration[value].value)",
                                             "created": "=$iteration[value].origin",
                                             "type": "reading"
                                         },

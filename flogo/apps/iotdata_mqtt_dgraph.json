@@ -406,7 +406,7 @@
                                             "uuid": "=$iteration[value].id",
                                             "reading": "reading",
                                             "value": "=air.ternary(\"Binary\"==$iteration[value].valueType||\"Object\"==$iteration[value].valueType, air.tobase64string($iteration[value].value), $iteration[value].value)",
-                                            "created": "=$iteration[value].origin",
+                                            "created": "=air.epoch2ms($iteration[value].origin)",
                                             "type": "reading"
                                         },
                                         "resource": {

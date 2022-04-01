@@ -105,7 +105,7 @@
                                 "httpHeaders": "[{\"Key\":\"Accept\",\"Value\":\"application/json\"},{\"Key\":\"Content-Type\",\"Value\":\"application/graphql+-\"}]"
                             },
                             "input": {
-                                "URL": "=$property[\"DgraphURL\"]",
+                                "URL": "=\"http://\"+$property[\"DgraphURL\"]",
                                 "Body": "{ resp(func: has(pipeline)) { uid name created modified description status logLevel subscriptionTopic } }",
                                 "SkipCondition": false
                             },
@@ -171,6 +171,16 @@
             "name": "DgraphURL",
             "type": "string",
             "value": "not set yet"
+        },
+        {
+            "name": "Dgraph_Username",
+            "type": "string",
+            "value": ""
+        },
+        {
+            "name": "DgraphPassword",
+            "type": "string",
+            "value": ""
         }
     ],
     "connections": {}

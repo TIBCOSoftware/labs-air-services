@@ -1,5 +1,5 @@
 {
-  "version": "0.7.0-725",
+  "version": "0.7.0-812",
   "scripts": {
     "prepare": "husky install && git config --local commit.template .commit-template",
     "release": "standard-version",

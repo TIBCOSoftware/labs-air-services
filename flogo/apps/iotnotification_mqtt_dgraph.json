@@ -5,7 +5,10 @@
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/builder",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/project-flogo/contrib/activity/actreturn",
+        "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/mapping",
+        "github.com/TIBCOSoftware/labs-air-contrib/function/air",
         "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
+        "github.com/project-flogo/contrib/function/array",
 		"github.com/project-flogo/contrib/function/coerce"
     ],
     "name": "IoTNotification_MQTT_Dgraph",

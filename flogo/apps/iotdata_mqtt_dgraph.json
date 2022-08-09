@@ -8,6 +8,7 @@
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/builder",
         "github.com/TIBCOSoftware/labs-air-contrib/activity/graphbuilder/dgraphupsert",
         "github.com/TIBCOSoftware/labs-air-contrib/trigger/mqtt",
+        "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/httpclient",
         "github.com/TIBCOSoftware/labs-lightcrane-contrib/activity/mapping",
         "github.com/project-flogo/contrib/activity/actreturn",
         "github.com/project-flogo/contrib/function/array",
@@ -170,7 +171,9 @@
                         "id": 2,
                         "from": "MappingValue",
                         "to": "AccumulatorSimple",
-                        "type": "default"
+                        "type": "expression",
+                        "label": "MappingValuetoAccumulatorSimple",
+                        "value": "\"Dgraph\" == $property[\"DataStore.API\"]"
                     },
                     {
                         "id": 3,
@@ -188,6 +191,25 @@
                         "id": 5,
                         "from": "DgraphUpsertSimple",
                         "to": "ReturnSimple",
+                        "type": "default"
+                    },
+                    {
+                        "id": 6,
+                        "from": "MappingValue",
+                        "to": "AccumulatorSimple2",
+                        "type": "exprOtherwise",
+                        "label": "MappingValuetoHTTPClient"
+                    },
+                    {
+                        "id": 7,
+                        "from": "AccumulatorSimple2",
+                        "to": "HTTPClient",
+                        "type": "default"
+                    },
+                    {
+                        "id": 8,
+                        "from": "HTTPClient",
+                        "to": "ReturnSimple2",
                         "type": "default"
                     }
                 ],
@@ -518,7 +540,7 @@
                                                 "type": "string",
                                                 "appPropertySupport": true
                                             },
-                                            "value": "=$property[\"GraphBuilder_dgraph.IoTDgraph.Dgraph_Server_URL\"]"
+                                            "value": "=$property[\"DataStore.Server_URL\"]"
                                         },
                                         {
                                             "name": "tlsEnabled",
@@ -542,7 +564,7 @@
                                                 "valid": true,
                                                 "visible": true
                                             },
-                                            "value": "=$property[\"GraphBuilder_dgraph.IoTDgraph.Username\"]"
+                                            "value": "=$property[\"DataStore.Username\"]"
                                         },
                                         {
                                             "name": "password",
@@ -557,7 +579,7 @@
                                                 "valid": true,
                                                 "visible": true
                                             },
-                                            "value": "=$property[\"GraphBuilder_dgraph.IoTDgraph.Password\"]"
+                                            "value": "=$property[\"DataStore.Password\"]"
                                         },
                                         {
                                             "name": "tls",
@@ -574,7 +596,7 @@
                                                 "valid": true,
                                                 "visible": false
                                             },
-                                            "value": ""
+                                            "value": "=$property[\"DataStore.TLS\"]"
                                         },
                                         {
                                             "name": "schemaGen",
@@ -667,6 +689,70 @@
                         "activity": {
                             "ref": "#actreturn"
                         }
+                    },
+                    {
+                        "id": "AccumulatorSimple2",
+                        "name": "AccumulatorSimple2",
+                        "description": "Accumulate tuple then release them as a batch",
+                        "activity": {
+                            "ref": "#accumulator",
+                            "settings": {
+                                "ArrayMode": false,
+                                "MarkLast":false,
+                                "WindowSize": 1,
+                                "DataFields": "[{\"Name\":\"timestamp\",\"Type\":\"Long\"},{\"Name\":\"value\",\"Type\":\"String\"}]"
+                            },
+                            "input": {
+                                "Input": {
+                                    "mapping": {
+                                        "value": "=string.endsWith($flow.reading.name, \"Inferred\") ? string.stringToBase64($flow.reading.value):$activity[MappingValue].Data.Value",
+                                        "timestamp": "=$flow.reading.origin"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "id": "HTTPClient",
+                        "name": "HTTPClient",
+                        "description": "This activity build docker image from Dockerfile",
+                        "activity": {
+                            "ref": "#httpclient",
+                            "settings": {
+                                "method": "GET",
+                                "timeout": "1500",
+                                "urlMappingString": "[]",
+                                "urlMapping": "[]",
+                                "leftToken": "$",
+                                "rightToken": "$",
+                                "variablesDef": "",
+                                "httpHeaders": ""
+                            },
+                            "input": {
+                                "URL": "=air.airdataselector($flow.gateway, $flow.reading, $flow.enriched, $property[\"DataStore.Server_URL\"])",
+                                "Method": "=$property[\"DataStore.Request_Method\"]",
+                                "Headers": "=$property[\"DataStore.Request_Headers\"]",
+                                "Body": "=air.object2json($activity[AccumulatorSimple2].Output)",
+                                "SkipCondition": "=false"
+                            },
+                            "schemas": {
+                                "input": {
+                                    "Variables": {
+                                        "type": "json",
+                                        "value": "{\"$schema\":\"http://json-schema.org/draft-04/schema#\",\"type\":\"object\",\"properties\":{}}",
+                                        "fe_metadata": "{}"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "id": "ReturnSimple2",
+                        "name": "ReturnSimple2",
+                        "description": "",
+                        "activity": {
+                            "ref": "#actreturn"
+                        }
                     }
                 ],
                 "metadata": {
@@ -743,19 +829,44 @@
             "value": "<please set mqtt password>"
         },
         {
-            "name": "GraphBuilder_dgraph.IoTDgraph.Dgraph_Server_URL",
+            "name": "DataStore.API",
+            "type": "string",
+            "value": "REST"
+        },
+        {
+            "name": "DataStore.Server_URL",
             "type": "string",
             "value": "<please set dgraph server URL>"
         },
         {
-            "name": "GraphBuilder_dgraph.IoTDgraph.Username",
+            "name": "DataStore.Username",
             "type": "string",
             "value": "admin"
         },
         {
-            "name": "GraphBuilder_dgraph.IoTDgraph.Password",
+            "name": "DataStore.Password",
             "type": "string",
             "value": ""
+        },
+        {
+            "name": "DataStore.TLS",
+            "type": "string",
+            "value": ""
+        },
+        {
+            "name": "DataStore.Request_Body",
+            "type": "string",
+            "value": "[{\"value\": \"200\",\"timestamp\": 1234567890}]"
+        },
+        {
+            "name": "DataStore.Request_Method",
+            "type": "string",
+            "value": "POST"
+        },
+        {
+            "name": "DataStore.Request_Headers",
+            "type": "string",
+            "value": "[{\"Key\":\"Accept\",\"Value\":\"application/json\"},{\"Key\":\"Content-Type\",\"Value\":\"application/json-patch+json\"}]"
         },
         {
             "name": "MQTTTrigger.Topic",
